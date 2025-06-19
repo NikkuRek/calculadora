@@ -54,3 +54,17 @@ function calculateResults() {
 
 // Initial calculation when the page loads to display K
 document.addEventListener('DOMContentLoaded', calculateResults);
+
+
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registrado con éxito:', registration);
+      })
+      .catch(error => {
+        console.log('Fallo el registro del Service Worker:', error);
+      });
+  });
+}
