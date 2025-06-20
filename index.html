@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +9,27 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="calculator-container">
         <div class="input-group">
             <p><strong>BCV:</strong> <span id="labelK">0</span> Bs</p>
+            <p><strong>Binance:</strong> <span id="labelZ">0</span> Bs</p>
             <label for="inputNumber">INTRODUZCA EL PRECIO EN DÓLARES </label>
             <input type="number" id="inputNumber" onkeyup="calculateResults()">
         </div>
 
         <div class="results-group">
             <p><strong>USDT:</strong> <span id="labelA">0</span></p>
-            <div style="display:none;"><p><strong>Result (B = X * K):</strong> <span id="labelB">0</span> $</p></div>
+            <div style="display:none;">
+                <p><strong>Result (B = X * K):</strong> <span id="labelB">0</span> $</p>
+            </div>
             <p><strong>Bolívares a Cobrar:</strong> <span id="labelC">0</span></p>
         </div>
+        <span id="connectionStatus">0</span>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>

@@ -1,64 +1,89 @@
-let K = 0; // Initialize K
+let BCV = 0;
+let BIN = 0;
 
-fetch('https://pydolarve.org/api/v2/dollar?page=bcv')
-    .then(response => response.json())
-    .then(data => {
-        if (data && data.monitors && data.monitors.usd && data.monitors.usd && data.monitors.usd.price) {
-            // Guarda el precio del USD en BCV y en K
-            let BCV = parseFloat(data.monitors.usd.price);
-            K = BCV; // Asigna BCV a K
-            // Recalcula los resultados con el nuevo valor de K
-            calculateResults();
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching BCV USD value:', error);
-    });
+// --- Fetch Functions ---
 
-function calculateResults() {
-    // Get the input value (X)
-    const inputNumber = document.getElementById('inputNumber').value;
-    const X = parseFloat(inputNumber);
-
-    // Get references to the result labels
-    const labelA = document.getElementById('labelA');
-    const labelK = document.getElementById('labelK');
-    const labelB = document.getElementById('labelB');
-    const labelC = document.getElementById('labelC');
-
-    // Check if the input is a valid number
-    if (isNaN(X) || inputNumber.trim() === '') {
-        // If not a number or empty, clear the results
-        labelA.textContent = '0';
-        labelK.textContent = K.toString(); // Still show K
-        labelB.textContent = '0';
-        labelC.textContent = '0';
-        return; // Exit the function
+async function fetchBCV() {
+  try {
+    const response = await fetch('https://pydolarve.org/api/v2/dollar?page=bcv');
+    const data = await response.json();
+    if (data?.monitors?.usd?.price) {
+      BCV = parseFloat(data.monitors.usd.price);
+      calculateResults();
     }
-
-    // Calculate A: X * 1.4
-    const A = X * 1.4;
-    labelA.textContent = A.toFixed(2); // Display with 2 decimal places
-
-    // Display K (constant value)
-    labelK.textContent = K.toString();
-
-    // Calculate B: X * K
-    const B = X * K;
-    labelB.textContent = B.toFixed(2);
-
-    // Calculate C: A * K
-    const C = A * K;
-    labelC.textContent = C.toFixed(2);
+  } catch (error) {
+    console.error('Error fetching BCV USD value:', error);
+  }
 }
 
-// Initial calculation when the page loads to display K
-document.addEventListener('DOMContentLoaded', calculateResults);
+async function fetchBinanceP2PPrice() {
+  try {
+    const response = await fetch('https://pydolarve.org/api/v2/market-p2p?platform=binance&format_date=default&rounded_price=true');
+    const data = await response.json();
+    if (data?.price) {
+      document.getElementById('labelZ').textContent = data.price;
+      BIN = parseFloat(data.price);
+    }
+  } catch (error) {
+    console.error('Error fetching Binance P2P price:', error);
+  }
+}
 
+// --- Calculation Functions ---
 
+function calculatePercent(bin, bcv) {
+  const dif = (bin * 1.06) - bcv;
+  return (dif / bcv) + 1;
+}
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+function calculateResults() {
+  const input = document.getElementById('inputNumber');
+  const X = parseFloat(input.value);
+
+  const labelA = document.getElementById('labelA');
+  const labelK = document.getElementById('labelK');
+  const labelB = document.getElementById('labelB');
+  const labelC = document.getElementById('labelC');
+
+  if (isNaN(X) || input.value.trim() === '') {
+    labelA.textContent = '0';
+    labelK.textContent = BCV.toString();
+    labelB.textContent = '0';
+    labelC.textContent = '0';
+    return;
+  }
+
+  const percent = calculatePercent(BIN, BCV);
+  const A = X * percent;
+  const B = X * BCV;
+  const C = A * BCV;
+
+  labelA.textContent = A.toFixed(2);
+  labelK.textContent = BCV.toString();
+  labelB.textContent = B.toFixed(2);
+  labelC.textContent = C.toFixed(2);
+}
+
+// --- Connection Status ---
+
+function checkInternetConnection() {
+  const connectionLabel = document.getElementById('connectionStatus');
+  if (!navigator.onLine) {
+    if (connectionLabel) {
+      connectionLabel.textContent = 'Sin conexión a internet';
+      connectionLabel.style.display = 'block';
+    }
+  } else {
+    if (connectionLabel) {
+      connectionLabel.style.display = 'none';
+    }
+  }
+}
+
+// --- Service Worker Registration ---
+
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/calculadora/service-worker.js')
       .then(registration => {
         console.log('Service Worker registrado con éxito:', registration);
@@ -66,5 +91,18 @@ if ('serviceWorker' in navigator) {
       .catch(error => {
         console.log('Fallo el registro del Service Worker:', error);
       });
-  });
+  }
 }
+
+// --- Event Listeners ---
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchBCV();
+  fetchBinanceP2PPrice();
+  calculateResults();
+  checkInternetConnection();
+  registerServiceWorker();
+});
+
+window.addEventListener('online', checkInternetConnection);
+window.addEventListener('offline', checkInternetConnection);
